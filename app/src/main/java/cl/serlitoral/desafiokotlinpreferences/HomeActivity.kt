@@ -20,9 +20,11 @@ class HomeActivity : AppCompatActivity() {
 
     val nicknameKey = "nickname_key"
     val ageKey = "age_key"
+    var languagesKey = ""
 
     private lateinit var userName: String
     private lateinit var homeTitle: TextView
+    private lateinit var nickname: TextView
     private lateinit var nicknameTitle: TextView
     private lateinit var spanishCheckBox: CheckBox
     private lateinit var englishCheckBox: CheckBox
@@ -46,13 +48,15 @@ class HomeActivity : AppCompatActivity() {
         setUpViews()
         loadData()
         save.setOnClickListener {
-            //Agregar los pasos necesario para guardar los datos
+           saveLanguages()
+            saveNickNameAndAge()
             Snackbar.make(container, "Datos guardados", Snackbar.LENGTH_SHORT).show()
         }
     }
 
     private fun setUpViews() {
         homeTitle = findViewById(R.id.home_title)
+        nickname = findViewById(R.id.nickname_title)
         nicknameTitle = findViewById(R.id.nickname_input)
         spanishCheckBox = findViewById(R.id.language_one)
         englishCheckBox = findViewById(R.id.language_two)
@@ -68,8 +72,11 @@ class HomeActivity : AppCompatActivity() {
         userName = sharedPreferences.getString("name_key", " ").toString()
         val title = "BienvenidoEsta es la pantalla inicial, aquí $userName podrá ver todas sus preferencias"
         homeTitle.text = title
-        handleLanguages()
-        loadProfile()
+        nickname.text = sharedPreferences.getString(nicknameKey, userName)
+
+
+            handleLanguages()
+            loadProfile()
     }
 
     private fun loadProfile() {
@@ -79,13 +86,18 @@ class HomeActivity : AppCompatActivity() {
         nickNameInput.setText(nickNameString)
         nicknameTitle.text = nickNameString
         val ageString = sharedPreferences.getInt(ageKey, 0)
-        ageInput.setText(ageString)
+        ageInput.setText(ageString.toString())
     }
 
     private fun handleLanguages() {
-        val languagesKey = ""
-        //val languages = mutableSetOf()
-        //ocupar resolveLanguage para cargar los datos iniciales en los checkboxs
+        languagesKey = "language_$userName"
+        val languages = sharedPreferences.getStringSet(languagesKey, mutableSetOf<String>())
+
+        if (languages != null) {
+            for(language: String in languages) {
+                resolveLanguage(language)
+            }
+        }
     }
 
     private fun resolveLanguage(language: String) {
@@ -100,14 +112,28 @@ class HomeActivity : AppCompatActivity() {
         }
         if (language.isNotEmpty() && language.contains("Other")) {
             otherCheckBox.isChecked = true
-            otherTextInput.setText(language.split("*")[2]) // ocupar el mismo delimitador para almacenar el valor de este campo
+            otherTextInput.setText(language.split("*")[1]) // ocupar el mismo delimitador para almacenar el valor de este campo
         }
     }
 
     private fun saveLanguages() {
-        //crear lo necesario para guardar los idiomas seleccionados por el usuario
-        //en sharedpreferences
-        val languagesKey = ""
+        val languages = mutableSetOf<String>()
+        if (spanishCheckBox.isChecked) {
+            languages.add("Spanish")
+        }
+        if (englishCheckBox.isChecked) {
+            languages.add("English")
+        }
+        if (germanCheckBox.isChecked) {
+            languages.add("German")
+        }
+        if (otherCheckBox.isChecked) {
+            languages.add("Other*${otherTextInput.text.toString()}")
+        }
+
+        editor.putStringSet(languagesKey, languages)
+        editor.apply()
+
     }
 
     private fun saveNickNameAndAge() {
